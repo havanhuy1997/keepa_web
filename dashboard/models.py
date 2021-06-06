@@ -1,5 +1,14 @@
+import threading
+
 import jsonfield
 from django.db import models
+from django.db.models.signals import post_save
+from djongo import models as mongo_models
+
+import utils.log as ut_log
+from keepa_web.settings import LOG_DIR
+from dashboard import tasks
+
 
 # Create your models here.
 class Category(models.Model):
@@ -9,10 +18,36 @@ class Category(models.Model):
     def __str__(self) -> str:
         return f"{str(self.id)} - {str(self.title)}"
 
+    def total_asin(self):
+        return Product.objects.filter(rootCategory=self.id).count()
+
+
+class Task(models.Model):
+    _id = mongo_models.ObjectIdField(primary_key=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    total_asins = models.IntegerField(null=True, blank=True)
+    started = models.DateTimeField(null=True, blank=True)
+    ended = models.DateTimeField(null=True, blank=True)
+
+    def got(self):
+        return self.category.total_asin()
+
+    def message(self):
+        file_log = self.get_file_log()
+        last_line = ut_log.get_last_line_of_file(file_log)
+        return last_line.split("-")[-1].strip()
+
+    def get_file_log(self):
+        return str(LOG_DIR / f"{str(self._id)}.txt")
+
 
 class Product(models.Model):
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
     productType = models.IntegerField(null=True, blank=True)
-    asin = models.TextField(primary_key=True)
+    asin = models.CharField(primary_key=True, max_length=20)
     domainId = models.IntegerField(null=True, blank=True)
     title = models.TextField(null=True, blank=True)
     trackingSince = models.IntegerField(null=True, blank=True)
@@ -85,3 +120,16 @@ class Product(models.Model):
 
     def __str__(self) -> str:
         return self.asin
+
+
+    def set_data(self, data):
+        for k, v in data.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+
+
+def start_task(sender, instance, *args, **kwargs):
+    thread = threading.Thread(target=tasks.fetch_data_for_category, args=(instance,))
+    thread.start()
+
+post_save.connect(start_task, sender=Category)
