@@ -27,7 +27,7 @@ class Task(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     total_asins = models.IntegerField(null=True, blank=True)
     started = models.DateTimeField(null=True, blank=True)
-    ended = models.DateTimeField(null=True, blank=True)
+    ended = models.DateTimeField(null=True, blank=True, default=None)
 
     def got(self):
         return self.category.total_asin()
@@ -129,6 +129,8 @@ class Product(models.Model):
 
 
 def start_task(sender, instance, *args, **kwargs):
+    if Task.objects.filter(category=instance, ended=None).first():
+        return
     thread = threading.Thread(target=tasks.fetch_data_for_category, args=(instance,))
     thread.start()
 
