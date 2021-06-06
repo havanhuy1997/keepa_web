@@ -98,12 +98,9 @@ class CategorySearch:
             if asin not in self.asins:
                 self.asins.append(asin)
                 new_asins.append(asin)
-        if not new_asins:
-            return
-        self.logger.info(f"Getting data for {len(new_asins)} asins")
         for asin in new_asins:
-            pass
             if not models.Product.objects.filter(asin=asin):
+                self.logger.info(f"Getting data for asin {asin}")
                 product = models.Product()
                 product.asin = asin
                 product.set_data(self.keepa_client.request_product_with_asin(asin))
