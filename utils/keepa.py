@@ -63,10 +63,6 @@ class CategorySearch:
         self.task = task
         self.category_id = task.category.id
         self._first_run()
-        # Save data for task in empty beginning filter 
-        if len(filters) == 1:
-            self.task.total_asins = self.total_asins
-            self.task.save()
         self.main_filter_key = filters[-1]["key"]
 
     def _get_dict_for_beginning_filters(self):
@@ -87,6 +83,10 @@ class CategorySearch:
             **self._get_dict_for_beginning_filters(),
         })
         self.total_asins = data["totalResults"]
+        # Save data for task in empty beginning filter 
+        if len(self.filters) == 1:
+            self.task.total_asins = self.total_asins
+            self.task.save()
         self.logger.info(f"Total asin: {self.total_asins}")
         self._save_asins_from_data(data)
 
