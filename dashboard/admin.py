@@ -5,7 +5,7 @@ from dashboard import models as models
 
 @admin.register(models.Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("id", "title")
+    list_display = ("id", "title", "domain")
 
 
 @admin.register(models.Product)

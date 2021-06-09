@@ -12,8 +12,15 @@ from dashboard import tasks
 
 # Create your models here.
 class Category(models.Model):
+    MARKET_CHOOSE = [
+       (1, "com"), (2, "co.uk"), (3, "de"), (4, "fr"), (5, "co.jp"),
+       (6, "ca"), (8, "it"), (9, "es"), (10, "in"), (11, "com.mx")
+    ]
     id = models.IntegerField(primary_key=True)
     title = models.TextField(null=True, blank=True)
+    domain = models.IntegerField(
+        default=1, choices=MARKET_CHOOSE
+    )
 
     def __str__(self) -> str:
         return f"{str(self.id)} - {str(self.title)}"

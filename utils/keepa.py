@@ -15,9 +15,10 @@ class KeepaClient:
     WAIT_TOKEN_SECONDS = 60
     token_left = None
 
-    def __init__(self, logger) -> None:
+    def __init__(self, logger, domain=US_DOMAIN) -> None:
         self.token_left = self._number_token()
         self.logger = logger
+        self.domain = domain
 
     def _request(self, url):
         while self.token_left < self.MIN_REQUIRED_TOKEN:
@@ -34,11 +35,11 @@ class KeepaClient:
         return r["tokensLeft"]
     
     def product_finder(self, params):
-        url = f"{self.API_URL}/query?key={self.KEY}&domain={self.US_DOMAIN}&selection={ut_net.quote_dict(params)}"
+        url = f"{self.API_URL}/query?key={self.KEY}&domain={self.domain}&selection={ut_net.quote_dict(params)}"
         return self._request(url)
 
     def request_product_with_asin(self, asin):
-        url = f"{self.API_URL}/product?key={self.KEY}&domain={self.US_DOMAIN}&asin={asin}"
+        url = f"{self.API_URL}/product?key={self.KEY}&domain={self.domain}&asin={asin}"
         data = self._request(url)
         products = data.get("products")
         if products:
@@ -59,7 +60,7 @@ class CategorySearch:
         self.asins = []
         self.logger = ut_log.get_logger_for_task(task)
         self.filters = filters
-        self.keepa_client = KeepaClient(logger=self.logger)
+        self.keepa_client = KeepaClient(self.logger, domain=task.category.domain)
         self.task = task
         self.category_id = task.category.id
         self._first_run()
