@@ -4,8 +4,12 @@ import jsonfield
 from django.db import models
 from django.db.models.signals import post_save
 from djongo import models as mongo_models
+import psutil
+from django.utils.html import format_html
+from django.urls import reverse
 
 import utils.log as ut_log
+import utils.dt as ut_dt
 from keepa_web.settings import LOG_DIR
 from dashboard import tasks
 
@@ -28,6 +32,12 @@ class Category(models.Model):
     def total_asin(self):
         return Product.objects.filter(rootCategory=self.id).count()
 
+    def has_running_task(self):
+        for task in Task.objects.filter(category=self):
+            if task.is_running():
+                return True
+        return False
+
 
 class Task(models.Model):
     _id = mongo_models.ObjectIdField(primary_key=True)
@@ -35,6 +45,7 @@ class Task(models.Model):
     total_asins = models.IntegerField(null=True, blank=True)
     started = models.DateTimeField(null=True, blank=True)
     ended = models.DateTimeField(null=True, blank=True, default=None)
+    pid = models.IntegerField(null=True, blank=True, default=None)
 
     def got(self):
         return self.category.total_asin()
@@ -46,6 +57,37 @@ class Task(models.Model):
 
     def get_file_log(self):
         return str(LOG_DIR / f"{str(self._id)}.txt")
+
+    def get_process(self):
+        process = None
+        if not self.pid:
+            return process
+        try:
+            process = psutil.Process(self.pid)
+        except:
+            pass
+        return process
+
+    def is_running(self):
+        process = self.get_process()
+        if not process:
+            return False
+        return process.is_running()
+
+    def start(self):
+        if not self.is_running():
+            thread = threading.Thread(target=tasks.start_task, args=(self,))
+            thread.start()
+            self.started=ut_dt.get_time_now()
+            self.pid = thread.native_id
+            self.save()
+
+    def action_button(self):
+        if not self.is_running():
+            return format_html(
+                f"<a href='{reverse('task-control', args=(self._id,))}'>Restart</a>"
+            )
+        return ""
 
 
 class Product(models.Model):
@@ -136,9 +178,9 @@ class Product(models.Model):
 
 
 def start_task(sender, instance, *args, **kwargs):
-    if Task.objects.filter(category=instance, ended=None).first():
+    if instance.has_running_task():
         return
-    thread = threading.Thread(target=tasks.fetch_data_for_category, args=(instance,))
-    thread.start()
+    task = Task.objects.create(category=instance)
+    task.start()
 
 post_save.connect(start_task, sender=Category)

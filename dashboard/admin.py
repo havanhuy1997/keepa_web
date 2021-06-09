@@ -15,4 +15,4 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(models.Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ("_id", "category", "got", "total_asins", "started", "ended", "message")
+    list_display = ("_id", "category", "got", "total_asins", "started", "ended", "message", "action_button")
