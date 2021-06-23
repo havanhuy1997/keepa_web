@@ -153,9 +153,10 @@ class CategorySearch:
         start = self.filters[-1]["min"]
         end = self.filters[-1]["max"]
         while len(self.asins) < self.total_asins:
-            self.task.min = start
-            self.task.max = end
-            self.task.save()
+            if len(self.filters) == 1:
+                self.task.min = start
+                self.task.max = end
+                self.task.save()
             total_result_for_this_range = self._query_with_range((start, end))
             if total_result_for_this_range == self.ASIN_PER_PAGE:
                self._query_with_big_range((start, end))
