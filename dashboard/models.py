@@ -46,6 +46,8 @@ class Task(models.Model):
     started = models.DateTimeField(null=True, blank=True)
     ended = models.DateTimeField(null=True, blank=True, default=None)
     pid = models.IntegerField(null=True, blank=True, default=None)
+    min = models.FloatField(null=True, blank=True, default=None)
+    max = models.FloatField(null=True, blank=True, default=None)
 
     def got(self):
         return self.category.total_asin()
@@ -88,6 +90,9 @@ class Task(models.Model):
                 f"<a href='{reverse('task-control', args=(self._id,))}'>Restart</a>"
             )
         return ""
+
+    def getting_price_in_range(self):
+        return f"{self.min} - {self.max}"
 
 
 class Product(models.Model):

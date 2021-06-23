@@ -1,7 +1,7 @@
 import copy
 import time
 
-from dashboard import models
+from dashboard import models, tasks
 
 import utils.net as ut_net
 import utils.log as ut_log
@@ -53,7 +53,11 @@ class CategorySearch:
     FILTER_KEYS = ["current_LISTPRICE", "current_SALES"]
     NUMBER_PARTS_DEVIDED_BIG_RANGE = 3
 
-    def __init__(self, task, filters=[{"key": FILTER_KEYS[0]}]) -> None:
+    def __init__(
+        self,
+        task,
+        filters=[{"key": FILTER_KEYS[0], "min": 0, "max": STEP_RANGE}]
+    ) -> None:
         """
         filters: [{key: current_LISTPRICE, min: 1000, max: 1200}, {key: current_LISTPRICE}]
         """
@@ -100,7 +104,7 @@ class CategorySearch:
                 self.asins.append(asin)
                 new_asins.append(asin)
         for asin in new_asins:
-            if not models.Product.objects.filter(asin=asin):
+            if not models.Product.objects.filter(asin=asin).first():
                 self.logger.info(f"Getting data for asin {asin}")
                 product = models.Product()
                 product.asin = asin
@@ -130,7 +134,7 @@ class CategorySearch:
             if self._query_with_range((start, end)) == self.ASIN_PER_PAGE:
                 if start == end:
                     # Check if reached all filters
-                    if len(self.filters) == self.FILTER_KEYS:
+                    if len(self.filters) == len(self.FILTER_KEYS):
                         self.log("Reached max filter keys")
                     else:
                         # Add new filter
@@ -138,7 +142,7 @@ class CategorySearch:
                         filters[-1]["min"] = start
                         filters[-1]["max"] = end
                         filters.append(
-                            {"key": self.FILTER_KEYS[len(filters)]}
+                            {"key": self.FILTER_KEYS[len(filters)], "min": 0, "max": self.STEP_RANGE}
                         )
                         category_search_with_begin_filters = CategorySearch(self.task, filters=filters)
                         category_search_with_begin_filters.get_all_asins()
@@ -146,9 +150,12 @@ class CategorySearch:
                     self._query_with_big_range((start, end))
 
     def get_all_asins(self) -> None:
-        start = 0
-        end = self.STEP_RANGE
+        start = self.filters[-1]["min"]
+        end = self.filters[-1]["max"]
         while len(self.asins) < self.total_asins:
+            self.task.min = start
+            self.task.max = end
+            self.task.save()
             total_result_for_this_range = self._query_with_range((start, end))
             if total_result_for_this_range == self.ASIN_PER_PAGE:
                self._query_with_big_range((start, end))
