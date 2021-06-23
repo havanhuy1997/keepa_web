@@ -81,6 +81,7 @@ class Task(models.Model):
             thread = threading.Thread(target=tasks.start_task, args=(self,))
             thread.start()
             self.started=ut_dt.get_time_now()
+            self.ended = None
             self.pid = thread.native_id
             self.save()
 
