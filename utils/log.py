@@ -3,7 +3,7 @@ import subprocess
 import pathlib
 
 def get_logger_for_task(task):
-    logger = logging.getLogger(str(task._id))
+    logger = logging.getLogger(str(task.id))
     if not logger.hasHandlers():
         fileh = logging.FileHandler(task.get_file_log(), "a")
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')

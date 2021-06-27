@@ -52,6 +52,11 @@ class CategorySearch:
     STEP_RANGE = 1000
     FILTER_KEYS = ["current_LISTPRICE", "current_SALES"]
     NUMBER_PARTS_DEVIDED_BIG_RANGE = 3
+    DELETED_KEYS = [
+        'perPage', 'page', 'rootCategory', 'sort',
+        'current_LISTPRICE_lte', 'current_LISTPRICE_gte',
+        'current_SALES_lte', 'current_SALES_gte',
+    ]
 
     def __init__(
         self,
@@ -69,6 +74,13 @@ class CategorySearch:
         self.category_id = task.category.id
         self._first_run()
         self.main_filter_key = filters[-1]["key"]
+    
+    def _add_category_filter(self, filter):
+        if self.task.category.filter:
+            for k, v in self.task.category.filter:
+                if k not in self.DELETED_KEYS:
+                    filter[k] = v
+        return filter
 
     def _get_dict_for_beginning_filters(self):
         d = {
@@ -85,7 +97,7 @@ class CategorySearch:
         data = self.keepa_client.product_finder({
             "rootCategory": self.category_id,
             "perPage": self.ASIN_PER_PAGE,
-            **self._get_dict_for_beginning_filters(),
+            **self._add_category_filter(self._get_dict_for_beginning_filters()),
         })
         self.total_asins = data["totalResults"]
         # Save data for task in empty beginning filter 
@@ -106,10 +118,13 @@ class CategorySearch:
         for asin in new_asins:
             if not models.Product.objects.filter(asin=asin).first():
                 self.logger.info(f"Getting data for asin {asin}")
-                product = models.Product()
-                product.asin = asin
-                product.set_data(self.keepa_client.request_product_with_asin(asin))
-                product.save()
+                data = self.keepa_client.request_product_with_asin(asin)
+                try:
+                    product = models.Product(asin=asin, rootCategory=self.task.category)
+                    product.set_data(data)
+                    product.save()
+                except Exception as e:
+                    self.logger.warn(f"Fail to save {asin}: {str(e)}")
 
     def _query_with_range(self, range: tuple) -> int:
         self.logger.info(f"Getting asins with {self.main_filter_key}={range}")
@@ -121,6 +136,7 @@ class CategorySearch:
             f"{self.main_filter_key}_gte": range[0],
         }
         query["sort"].append([self.main_filter_key, "asc"])
+        query = self._add_category_filter(query)
         data = self.keepa_client.product_finder(query)
         self._save_asins_from_data(data)
         return len(data["asinList"])

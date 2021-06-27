@@ -10,6 +10,9 @@ def start_task(task):
             filters =  [{"key": ut_keepa.CategorySearch.FILTER_KEYS[0], "min": task.min, "max": task.max}]
             search = ut_keepa.CategorySearch(task, filters=filters)
         else:
+            task.min = 0
+            task.max = ut_keepa.CategorySearch.STEP_RANGE
+            task.save()
             search = ut_keepa.CategorySearch(task)
         search.get_all_asins()
     except Exception as e:

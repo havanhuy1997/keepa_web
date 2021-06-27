@@ -1,12 +1,12 @@
 import threading
+from typing import Tuple
 
-import jsonfield
 from django.db import models
 from django.db.models.signals import post_save
-from djongo import models as mongo_models
 import psutil
 from django.utils.html import format_html
 from django.urls import reverse
+from django.db.models import JSONField
 
 import utils.log as ut_log
 import utils.dt as ut_dt
@@ -25,6 +25,7 @@ class Category(models.Model):
     domain = models.IntegerField(
         default=1, choices=MARKET_CHOOSE
     )
+    filter = JSONField(null=True, blank=True)
 
     def __str__(self) -> str:
         return f"{str(self.id)} - {str(self.title)}"
@@ -40,7 +41,6 @@ class Category(models.Model):
 
 
 class Task(models.Model):
-    _id = mongo_models.ObjectIdField(primary_key=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     total_asins = models.IntegerField(null=True, blank=True)
     started = models.DateTimeField(null=True, blank=True)
@@ -58,7 +58,7 @@ class Task(models.Model):
         return last_line.split("-")[-1].strip()
 
     def get_file_log(self):
-        return str(LOG_DIR / f"{str(self._id)}.txt")
+        return str(LOG_DIR / f"{str(self.id)}.txt")
 
     def get_process(self):
         process = None
@@ -88,7 +88,7 @@ class Task(models.Model):
     def action_button(self):
         if not self.is_running():
             return format_html(
-                f"<a href='{reverse('task-control', args=(self._id,))}'>Restart</a>"
+                f"<a href='{reverse('task-control', args=(self.id,))}'>Restart</a>"
             )
         return ""
 
@@ -112,14 +112,14 @@ class Product(models.Model):
     lastPriceChange = models.IntegerField(null=True, blank=True)
     lastEbayUpdate = models.IntegerField(null=True, blank=True)
     imagesCSV = models.TextField(null=True, blank=True)
-    rootCategory = models.IntegerField(null=True, blank=True)
-    categories = jsonfield.JSONField(null=True, blank=True)
-    categoryTree = jsonfield.JSONField(null=True, blank=True)
+    rootCategory = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, default=None)
+    categories = JSONField(null=True, blank=True)
+    categoryTree = JSONField(null=True, blank=True)
     parentAsin = models.TextField(null=True, blank=True)
     variationCSV = models.TextField(null=True, blank=True)
-    frequentlyBoughtTogether = jsonfield.JSONField(null=True, blank=True)
-    eanList = jsonfield.JSONField(null=True, blank=True)
-    upcList = jsonfield.JSONField(null=True, blank=True)
+    frequentlyBoughtTogether = JSONField(null=True, blank=True)
+    eanList = JSONField(null=True, blank=True)
+    upcList = JSONField(null=True, blank=True)
     manufacturer = models.TextField(null=True, blank=True)
     brand = models.TextField(null=True, blank=True)
     productGroup = models.TextField(null=True, blank=True)
@@ -130,13 +130,13 @@ class Product(models.Model):
     numberOfPages = models.IntegerField(null=True, blank=True)
     publicationDate = models.IntegerField(null=True, blank=True)
     releaseDate = models.IntegerField(null=True, blank=True)
-    languages  = jsonfield.JSONField(null=True, blank=True)
+    languages  = JSONField(null=True, blank=True)
     model = models.TextField(null=True, blank=True)
     color = models.TextField(null=True, blank=True)
     size = models.TextField(null=True, blank=True)
     edition = models.TextField(null=True, blank=True)
     format = models.TextField(null=True, blank=True)
-    features = jsonfield.JSONField(null=True, blank=True)
+    features = JSONField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     packageHeight = models.IntegerField(null=True, blank=True)
     packageLength = models.IntegerField(null=True, blank=True)
@@ -147,31 +147,31 @@ class Product(models.Model):
     itemWidth = models.IntegerField(null=True, blank=True)
     itemWeight = models.IntegerField(null=True, blank=True)
     availabilityAmazon = models.IntegerField(null=True, blank=True)
-    availabilityAmazonDelay = jsonfield.JSONField(null=True, blank=True)
-    ebayListingIds = jsonfield.JSONField(null=True, blank=True)
+    availabilityAmazonDelay = JSONField(null=True, blank=True)
+    ebayListingIds = JSONField(null=True, blank=True)
     isAdultProduct = models.BooleanField(null=True, blank=True)
     launchpad = models.BooleanField(null=True, blank=True)
     audienceRating = models.TextField(null=True, blank=True)
     newPriceIsMAP = models.BooleanField(null=True, blank=True)
     isEligibleForTradeIn = models.BooleanField(null=True, blank=True)
     isEligibleForSuperSaverShipping = models.BooleanField(null=True, blank=True)
-    fbaFees = jsonfield.JSONField(null=True, blank=True)
-    variations = jsonfield.JSONField(null=True, blank=True)
-    coupon = jsonfield.JSONField(null=True, blank=True)
-    promotions = jsonfield.JSONField(null=True, blank=True)
-    stats = jsonfield.JSONField(null=True, blank=True)
+    fbaFees = JSONField(null=True, blank=True)
+    variations = JSONField(null=True, blank=True)
+    coupon = JSONField(null=True, blank=True)
+    promotions = JSONField(null=True, blank=True)
+    stats = JSONField(null=True, blank=True)
     salesRankReference = models.BigIntegerField(null=True, blank=True)
-    salesRanks = jsonfield.JSONField(null=True, blank=True)
+    salesRanks = JSONField(null=True, blank=True)
     rentalDetails = models.TextField(null=True, blank=True)
     rentalSellerId = models.TextField(null=True, blank=True)
-    rentalPrices = jsonfield.JSONField(null=True, blank=True)
-    offers = jsonfield.JSONField(null=True, blank=True)
-    liveOffersOrder = jsonfield.JSONField(null=True, blank=True)
-    buyBoxSellerIdHistory = jsonfield.JSONField(null=True, blank=True)
+    rentalPrices = JSONField(null=True, blank=True)
+    offers = JSONField(null=True, blank=True)
+    liveOffersOrder = JSONField(null=True, blank=True)
+    buyBoxSellerIdHistory = JSONField(null=True, blank=True)
     isRedirectASIN = models.BooleanField(null=True, blank=True)
     isSNS = models.BooleanField(null=True, blank=True)
     offersSuccessful = models.BooleanField(null=True, blank=True)
-    csv = jsonfield.JSONField(null=True, blank=True)
+    csv = JSONField(null=True, blank=True)
 
     def __str__(self) -> str:
         return self.asin
@@ -179,6 +179,8 @@ class Product(models.Model):
 
     def set_data(self, data):
         for k, v in data.items():
+            if k == 'rootCategory':
+                continue
             if hasattr(self, k):
                 setattr(self, k, v)
 

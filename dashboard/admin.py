@@ -16,6 +16,6 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(models.Task)
 class TaskAdmin(admin.ModelAdmin):
     list_display = (
-        "_id", "category", "got", "total_asins", "getting_price_in_range",
+        "id", "category", "got", "total_asins", "getting_price_in_range",
         "started", "ended", "message", "action_button",
     )
