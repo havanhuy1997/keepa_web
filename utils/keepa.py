@@ -77,7 +77,7 @@ class CategorySearch:
     
     def _add_category_filter(self, filter):
         if self.task.category.filter:
-            for k, v in self.task.category.filter:
+            for k, v in self.task.category.filter.items():
                 if k not in self.DELETED_KEYS:
                     filter[k] = v
         return filter
