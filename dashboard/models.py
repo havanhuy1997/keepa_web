@@ -204,8 +204,8 @@ class Product(models.Model):
     isSNS = models.BooleanField(null=True, blank=True)
     offersSuccessful = models.BooleanField(null=True, blank=True)
     csv = JSONField(null=True, blank=True)
-    price = models.FloatField(default=None)
-    india_price = models.FloatField(default=None)
+    price = models.FloatField(default=None, null=True, blank=True)
+    india_price = models.FloatField(default=None, null=True, blank=True)
 
     def __str__(self) -> str:
         return self.asin
@@ -218,7 +218,7 @@ class Product(models.Model):
         try:
             self.price = self.csv[0][1] / 100
             if currency_rate:
-                self.india_price = self.current_price * currency_rate
+                self.india_price = self.price * currency_rate
         except:
             pass
         try:
