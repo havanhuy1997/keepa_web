@@ -226,7 +226,7 @@ class Product(models.Model):
             pass
         try:
             child_category = self.categoryTree[-1]
-            if child_category.catId not in self.child_category_ids:
+            if child_category["catId"] not in self.child_category_ids:
                 category = HSNDB.objects.create(
                     child_category=child_category["name"],
                     category_id=child_category["catId"]
