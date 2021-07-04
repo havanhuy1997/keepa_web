@@ -20,7 +20,8 @@ class Category(models.Model):
        (1, "com"), (2, "co.uk"), (3, "de"), (4, "fr"), (5, "co.jp"),
        (6, "ca"), (8, "it"), (9, "es"), (10, "in"), (11, "com.mx")
     ]
-    id = models.IntegerField(primary_key=True)
+    id = models.AutoField(primary_key=True)
+    category_id = models.BigIntegerField(default=None, null=True)
     title = models.TextField(null=True, blank=True)
     domain = models.IntegerField(
         default=1, choices=MARKET_CHOOSE
@@ -112,7 +113,7 @@ class Product(models.Model):
     lastPriceChange = models.IntegerField(null=True, blank=True)
     lastEbayUpdate = models.IntegerField(null=True, blank=True)
     imagesCSV = models.TextField(null=True, blank=True)
-    rootCategory = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, default=None)
+    rootCategory = models.BigIntegerField(null=True, blank=True)
     categories = JSONField(null=True, blank=True)
     categoryTree = JSONField(null=True, blank=True)
     parentAsin = models.TextField(null=True, blank=True)
@@ -179,8 +180,6 @@ class Product(models.Model):
 
     def set_data(self, data):
         for k, v in data.items():
-            if k == 'rootCategory':
-                continue
             if hasattr(self, k):
                 setattr(self, k, v)
 

@@ -71,7 +71,7 @@ class CategorySearch:
         self.filters = filters
         self.keepa_client = KeepaClient(self.logger, domain=task.category.domain)
         self.task = task
-        self.category_id = task.category.id
+        self.category_id = task.category.category_id
         self._first_run()
         self.main_filter_key = filters[-1]["key"]
     
@@ -120,7 +120,7 @@ class CategorySearch:
                 self.logger.info(f"Getting data for asin {asin}")
                 data = self.keepa_client.request_product_with_asin(asin)
                 try:
-                    product = models.Product(asin=asin, rootCategory=self.task.category)
+                    product = models.Product(asin=asin)
                     product.set_data(data)
                     product.save()
                 except Exception as e:
