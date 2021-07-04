@@ -7,6 +7,8 @@ import psutil
 from django.utils.html import format_html
 from django.urls import reverse
 from django.db.models import JSONField
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 import utils.log as ut_log
 import utils.dt as ut_dt
@@ -182,6 +184,29 @@ class Product(models.Model):
         for k, v in data.items():
             if hasattr(self, k):
                 setattr(self, k, v)
+
+
+def validate_percentage(value):
+    if value < 0 or value > 1:
+        raise ValidationError(
+            _('%(value)s is not correct'),
+            params={'value': value},
+        )
+
+
+class HSNDB(models.Model):
+    child_category = models.TextField()
+    category_id = models.BigIntegerField(primary_key=True)
+    hsn = models.IntegerField(null=True, blank=True)
+    bcd = models.FloatField(default=0, validators=[validate_percentage])
+    gst = models.FloatField(default=0, validators=[validate_percentage])
+    custom_health_cess = models.FloatField(default=0, validators=[validate_percentage])
+    additional_duty_of_customs = models.FloatField(default=0, validators=[validate_percentage])
+    additional_cvd = models.FloatField(default=0, validators=[validate_percentage])
+    compensation_cess = models.FloatField(default=0, validators=[validate_percentage])
+    social_welfare_surcharge = models.FloatField(default=0, validators=[validate_percentage])
+    custom_aidc = models.FloatField(default=0, validators=[validate_percentage])
+    excise_aidc = models.FloatField(default=0, validators=[validate_percentage])
 
 
 def start_task(sender, instance, *args, **kwargs):

@@ -19,3 +19,7 @@ class TaskAdmin(admin.ModelAdmin):
         "id", "category", "got", "total_asins", "getting_price_in_range",
         "started", "ended", "message", "action_button",
     )
+
+@admin.register(models.HSNDB)
+class HSBDBAdmin(admin.ModelAdmin):
+    list_display = [f.name for f in models.HSNDB._meta.fields]
