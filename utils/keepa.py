@@ -66,6 +66,11 @@ class CategorySearch:
         """
         filters: [{key: current_LISTPRICE, min: 1000, max: 1200}, {key: current_LISTPRICE}]
         """
+        currency_rate = models.CurrencyRate.objects.filter(domain=task.category.domain).first()
+        if currency_rate:
+            self.currency_rate = currency_rate.rate
+        else:
+            self.currency_rate = None
         self.asins = []
         self.logger = ut_log.get_logger_for_task(task)
         self.filters = filters
@@ -74,11 +79,6 @@ class CategorySearch:
         self.category_id = task.category.category_id
         self._first_run()
         self.main_filter_key = filters[-1]["key"]
-        currency_rate = models.CurrencyRate.objects.filter(domain=task.category.domain).first()
-        if currency_rate:
-            self.currency_rate = currency_rate.rate
-        else:
-            self.currency_rate = None
     
     def _add_category_filter(self, filter):
         if self.task.category.filter:
