@@ -133,7 +133,7 @@ class Product(models.Model):
             
         super().__init__(*args, **kwargs)
 
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, default=None)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, default=None, null=True)
     productType = models.IntegerField(null=True, blank=True)
     asin = models.CharField(primary_key=True, max_length=20)
     domainId = models.IntegerField(null=True, blank=True)
