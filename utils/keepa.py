@@ -125,7 +125,7 @@ class CategorySearch:
                 self.logger.info(f"Getting data for asin {asin}")
                 data = self.keepa_client.request_product_with_asin(asin)
                 try:
-                    product = models.Product(asin=asin)
+                    product = models.Product(asin=asin, category=self.task.category)
                     product.set_data(data, currency_rate=self.currency_rate)
                     product.save()
                 except Exception as e:

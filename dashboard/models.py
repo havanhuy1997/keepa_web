@@ -34,7 +34,7 @@ class Category(models.Model):
         return f"{str(self.id)} - {str(self.title)}"
 
     def total_asin(self):
-        return Product.objects.filter(rootCategory=self.category_id).count()
+        return Product.objects.filter(category=self).count()
 
     def has_running_task(self):
         for task in Task.objects.filter(category=self):
@@ -133,6 +133,7 @@ class Product(models.Model):
             
         super().__init__(*args, **kwargs)
 
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, default=None)
     productType = models.IntegerField(null=True, blank=True)
     asin = models.CharField(primary_key=True, max_length=20)
     domainId = models.IntegerField(null=True, blank=True)
