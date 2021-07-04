@@ -23,3 +23,8 @@ class TaskAdmin(admin.ModelAdmin):
 @admin.register(models.HSNDB)
 class HSBDBAdmin(admin.ModelAdmin):
     list_display = [f.name for f in models.HSNDB._meta.fields]
+
+
+@admin.register(models.CurrencyRate)
+class CurrencyRate(admin.ModelAdmin):
+    list_display = ("domain", "rate")

@@ -99,7 +99,33 @@ class Task(models.Model):
         return f"{self.min} - {self.max}"
 
 
+def validate_percentage(value):
+    if value < 0 or value > 1:
+        raise ValidationError(
+            _('%(value)s is not correct'),
+            params={'value': value},
+        )
+
+
+class HSNDB(models.Model):
+    child_category = models.TextField()
+    category_id = models.BigIntegerField(primary_key=True)
+    hsn = models.IntegerField(null=True, blank=True)
+    bcd = models.FloatField(default=0, validators=[validate_percentage])
+    gst = models.FloatField(default=0, validators=[validate_percentage])
+    custom_health_cess = models.FloatField(default=0, validators=[validate_percentage])
+    additional_duty_of_customs = models.FloatField(default=0, validators=[validate_percentage])
+    additional_cvd = models.FloatField(default=0, validators=[validate_percentage])
+    compensation_cess = models.FloatField(default=0, validators=[validate_percentage])
+    social_welfare_surcharge = models.FloatField(default=0, validators=[validate_percentage])
+    custom_aidc = models.FloatField(default=0, validators=[validate_percentage])
+    excise_aidc = models.FloatField(default=0, validators=[validate_percentage])
+
+
 class Product(models.Model):
+    child_category_ids = [
+        hsb.category_id for hsb in HSNDB.objects.all()
+    ]
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -175,38 +201,40 @@ class Product(models.Model):
     isSNS = models.BooleanField(null=True, blank=True)
     offersSuccessful = models.BooleanField(null=True, blank=True)
     csv = JSONField(null=True, blank=True)
+    price = models.FloatField(default=None)
+    india_price = models.FloatField(default=None)
 
     def __str__(self) -> str:
         return self.asin
 
 
-    def set_data(self, data):
+    def set_data(self, data, currency_rate=1):
         for k, v in data.items():
             if hasattr(self, k):
                 setattr(self, k, v)
+        try:
+            self.price = self.csv[0][1] / 100
+            if currency_rate:
+                self.india_price = self.current_price * currency_rate
+        except:
+            pass
+        try:
+            child_category = self.categoryTree[-1]
+            if child_category.catId not in self.child_category_ids:
+                category = HSNDB.objects.create(
+                    child_category=child_category["name"],
+                    category_id=child_category["catId"]
+                )
+                self.child_category_ids.append(category.category_id)
+        except:
+            pass
 
 
-def validate_percentage(value):
-    if value < 0 or value > 1:
-        raise ValidationError(
-            _('%(value)s is not correct'),
-            params={'value': value},
-        )
-
-
-class HSNDB(models.Model):
-    child_category = models.TextField()
-    category_id = models.BigIntegerField(primary_key=True)
-    hsn = models.IntegerField(null=True, blank=True)
-    bcd = models.FloatField(default=0, validators=[validate_percentage])
-    gst = models.FloatField(default=0, validators=[validate_percentage])
-    custom_health_cess = models.FloatField(default=0, validators=[validate_percentage])
-    additional_duty_of_customs = models.FloatField(default=0, validators=[validate_percentage])
-    additional_cvd = models.FloatField(default=0, validators=[validate_percentage])
-    compensation_cess = models.FloatField(default=0, validators=[validate_percentage])
-    social_welfare_surcharge = models.FloatField(default=0, validators=[validate_percentage])
-    custom_aidc = models.FloatField(default=0, validators=[validate_percentage])
-    excise_aidc = models.FloatField(default=0, validators=[validate_percentage])
+class CurrencyRate(models.Model):
+    domain = models.IntegerField(
+        default=1, choices=Category.MARKET_CHOOSE
+    )
+    rate = models.FloatField()
 
 
 def start_task(sender, instance, *args, **kwargs):

@@ -1,7 +1,7 @@
 import copy
 import time
 
-from dashboard import models, tasks
+from dashboard import models
 
 import utils.net as ut_net
 import utils.log as ut_log
@@ -74,6 +74,11 @@ class CategorySearch:
         self.category_id = task.category.category_id
         self._first_run()
         self.main_filter_key = filters[-1]["key"]
+        currency_rate = models.CurrencyRate.objects.filter(domain=task.category.domain).first()
+        if currency_rate:
+            self.currency_rate = currency_rate.rate
+        else:
+            self.currency_rate = None
     
     def _add_category_filter(self, filter):
         if self.task.category.filter:
@@ -121,7 +126,7 @@ class CategorySearch:
                 data = self.keepa_client.request_product_with_asin(asin)
                 try:
                     product = models.Product(asin=asin)
-                    product.set_data(data)
+                    product.set_data(data, currency_rate=self.currency_rate)
                     product.save()
                 except Exception as e:
                     self.logger.warn(f"Fail to save {asin}: {str(e)}")
