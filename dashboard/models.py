@@ -34,7 +34,7 @@ class Category(models.Model):
         return f"{str(self.id)} - {str(self.title)}"
 
     def total_asin(self):
-        return Product.objects.filter(rootCategory=self.id).count()
+        return Product.objects.filter(rootCategory=self.category_id).count()
 
     def has_running_task(self):
         for task in Task.objects.filter(category=self):
@@ -216,8 +216,10 @@ class Product(models.Model):
             if hasattr(self, k):
                 setattr(self, k, v)
         try:
-            self.price = self.csv[0][1] / 100
-            if currency_rate:
+            price = self.csv[0][1] / 100
+            if price >= 0:
+                self.price = price
+            if currency_rate and self.price:
                 self.india_price = self.price * currency_rate
         except:
             pass
