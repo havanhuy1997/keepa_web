@@ -123,11 +123,14 @@ class HSNDB(models.Model):
 
 
 class Product(models.Model):
-    child_category_ids = [
-        hsb.category_id for hsb in HSNDB.objects.all()
-    ]
+    child_category_ids = []
 
     def __init__(self, *args, **kwargs) -> None:
+        if not self.child_category_ids:
+            self.child_category_ids = [
+                hsb.category_id for hsb in HSNDB.objects.all()
+            ]
+            
         super().__init__(*args, **kwargs)
 
     productType = models.IntegerField(null=True, blank=True)
