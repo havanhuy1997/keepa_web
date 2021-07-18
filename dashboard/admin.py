@@ -25,6 +25,6 @@ class HSBDBAdmin(admin.ModelAdmin):
     list_display = [f.name for f in models.HSNDB._meta.fields]
 
 
-@admin.register(models.CurrencyRate)
+@admin.register(models.PricingConfig)
 class CurrencyRate(admin.ModelAdmin):
-    list_display = ("domain", "rate")
+    list_display = ("key", "value")

@@ -211,17 +211,32 @@ class Product(models.Model):
     def __str__(self) -> str:
         return self.asin
 
+    def _get_buybox_price(self):
+        price = None
+        try:
+            prices = [
+                self.stats['current'][18],
+                self.stats['avg30'][18],
+                self.stats['avg90'][18],
+            ]
+            for p in prices:
+                if p > 0:
+                    price = p / 100
+                    break
+        except:
+            pass
+        return price
 
     def set_data(self, data, currency_rate=1):
         for k, v in data.items():
             if hasattr(self, k):
                 setattr(self, k, v)
         try:
-            price = self.csv[0][1] / 100
-            if price >= 0:
+            price = self._get_buybox_price()
+            if price is not None:
                 self.price = price
-            if currency_rate and self.price:
-                self.india_price = self.price * currency_rate
+                if currency_rate:
+                    self.india_price = self.price * currency_rate
         except:
             pass
         try:
@@ -236,11 +251,11 @@ class Product(models.Model):
             pass
 
 
-class CurrencyRate(models.Model):
-    domain = models.IntegerField(
-        default=1, choices=Category.MARKET_CHOOSE
-    )
-    rate = models.FloatField()
+class PricingConfig(models.Model):
+    US_DOLLAR_INDIA_RATE_KEY = 'dollar/india'
+
+    key = models.TextField(null=False, blank=False)
+    value = models.FloatField(null=False, blank=False)
 
 
 def start_task(sender, instance, *args, **kwargs):

@@ -39,7 +39,7 @@ class KeepaClient:
         return self._request(url)
 
     def request_product_with_asin(self, asin):
-        url = f"{self.API_URL}/product?key={self.KEY}&domain={self.domain}&asin={asin}"
+        url = f"{self.API_URL}/product?key={self.KEY}&domain={self.domain}&asin={asin}&stats=90&buybox=1"
         data = self._request(url)
         products = data.get("products")
         if products:
@@ -66,9 +66,9 @@ class CategorySearch:
         """
         filters: [{key: current_LISTPRICE, min: 1000, max: 1200}, {key: current_LISTPRICE}]
         """
-        currency_rate = models.CurrencyRate.objects.filter(domain=task.category.domain).first()
+        currency_rate = models.PricingConfig.objects.filter(key=models.PricingConfig.US_DOLLAR_INDIA_RATE_KEY).first()
         if currency_rate:
-            self.currency_rate = currency_rate.rate
+            self.currency_rate = currency_rate.value
         else:
             self.currency_rate = None
         self.asins = []
